@@ -18,6 +18,15 @@ def classify(filename):
 
 ### function to calculate the probability that the
 ### given words are in a specific class
+def probability(words,cat)
+    # find the probability of the given catagory (i.e., number of
+    # cat emails divided by total number of emails
+    score = 0
+    cat_prob = float(cat_total[cat]/total_count)
+    score = math.log(cat_prob)
+    for w in words:
+        # calculate the conditional probability for each word
+    
     
 
 
