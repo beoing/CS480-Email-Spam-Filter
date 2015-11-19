@@ -9,13 +9,22 @@ import math
 global d
 global cat_total
 
+global spamRight
+global spamWrong
+global hamRight
+global hamWrong
+
 def train(filename, label):
   global d
   global cat_total
-  file = open(filename)
-  emailstring = file.read()
-  emaillist = emailstring.split()
-  emailset = set(emaillist)
+  try:
+    file = open(filename)
+
+    emailstring = file.read()
+    emaillist = emailstring.split()
+    emailset = set(emaillist)
+  except:
+    return
   if label=="spam":
     for word in emailset:
       strippedword = word.strip(" " + string.punctuation).lower()
@@ -43,6 +52,12 @@ def main():
   global d
   d = {}
 
+  global spamRight
+  global spamWrong
+  global hamRight
+  global hamWrong
+
+
 
   path = "./spam"
   for filename in glob.glob(os.path.join(path, '*txt')):
@@ -54,19 +69,22 @@ def main():
     train(filename, "ham")
     cat_total[1]+=1
 
-  #print(d)
-  #
+  spamRight = 0
+  spamWrong = 0
+  hamRight = 0
+  hamWrong = 0
 
-  print(cat_total)
+  
 
   path = "./evaluation"
   for filename in glob.glob(os.path.join(path, '*txt')):
-    classify(filename)
+    classify(filename, False)
 
-  #print(cat_total)
+  print(spamRight, spamWrong, hamRight, hamWrong)
 
 
 
+    
 ### classification method
 ### current assumption: all data that I need will be available,
 ### from Valerie's code.
@@ -107,7 +125,6 @@ def probability(words,cat):
       score = score + math.log(1/(total + len(d)))
     else:
       score = score + math.log((d[w][cat] + 1)/(total + len(d)))
-      print(score)
   return score
 
 
@@ -116,7 +133,14 @@ def probability(words,cat):
 ###                   either ham or spam
 ### output: a message stating whether the email has been classified
 ###          as ham or spam
-def classify(filename):
+def classify(filename, print_ans):
+  global num
+  global spamRight
+  global spamWrong
+  global hamRight
+  global hamWrong
+
+
   spam = 0
   ham = 1
   
@@ -129,23 +153,26 @@ def classify(filename):
   # calculate the probability of ham
   prob_ham = probability(wordset,ham)
 
-  if (prob_spam > prob_ham):
-    print(filename + " This message is spam.")
+  if(prob_spam > prob_ham):
+    classified = 0
   else:
-    print(filename + " This message is not spam.")
+    classified = 1
+
+  if (print_ans):
+    if (not classifed):
+      print(filename + " This message is spam.")
+    else:
+      print(filename + " This message is ham.")
+
+  if ("spam" in filename and not classified):
+    spamRight = spamRight + 1
+  elif ("spam" in filename and classified):
+    spamWrong = spamWrong + 1
+  elif ("ham" in filename and not classified):
+    hamRight = hamRight + 1
+  else:
+    hamWrong = hamWrong + 1
 
 
-
-
-
-
-
-
-
-
-  
-    
 main()
 
-  
-    
