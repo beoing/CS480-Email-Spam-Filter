@@ -8,6 +8,7 @@ import glob
 global d
 
 def train(filename, label):
+  global d
   file = open(filename)
   emailstring = file.read()
   emaillist = emailstring.split()
@@ -27,6 +28,8 @@ def train(filename, label):
       else:
         d[strippedword]=[0, 1]
 
+  file.close()
+
 def main():
 
   ham_word_count = 0
@@ -34,7 +37,7 @@ def main():
 
   ham_email_count = 0
   spam_email_count = 0
-
+  global d
   d = {}
 
   spam = ["spamemail.txt"]
@@ -43,43 +46,8 @@ def main():
 
   for filename in glob.glob(os.path.join(path, '*txt')):
     train(filename, "spam")
-    
-
-
-
-    file.close()
-    
-
-  emailstring = "This is a spam email spam email"
-
-  #print(emailstring.split())
-
-  emaillist = emailstring.split()
-
-  emailset = set(emaillist)
-  print(emailset)
-
-  for word in emailset:
-    if word in d:
-      d[word][0]+=1
-    else:
-      d[word]=[1, 0]
 
   print(d)
-
-  #e = {"apple":(1, 5), "pizza":(2,3)}
-
-  #print(e)
-  #print(e["apple"][1])
-
-  #print("DOn't".strip(" " + string.punctuation).lower())
-
-  
-
-
-
-
-
 
 main()
 
