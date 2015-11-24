@@ -41,8 +41,6 @@ class SpamFilter(object):
     # Refer to the constant indexes for clarification.
     self.accuracy = [ [0, 0], [0, 0] ]
     
-
-
   ## adds a labeled email to the spam filter's training knowledge base
   def train(self, filename, label):
     
@@ -74,19 +72,25 @@ class SpamFilter(object):
       # increment the label training occurrence count
       self.labelTotal[label] += 1
 
-    
+  ## calls the training method across all emails in the specified directory
+  ## for the specified label
   def bulkTrain(self, spamDirectory = "./spam", hamDirectory = "./ham"):
-    # training operations
+    # keep track of number of emails used for training
+    emailsTrained = 0
+
     # train filter to recognize spam words
     for filename in glob.glob(os.path.join(spamDirectory, '*txt')):
       self.train(filename, self.SPAM)
       self.emailsTrained[self.SPAM] += 1
-    # train filter to recognize ham words
+      emailsTrained += 1
 
+    # train filter to recognize ham words
     for filename in glob.glob(os.path.join(hamDirectory, '*txt')):
       self.train(filename, self.HAM)
       self.emailsTrained[self.HAM] += 1
+      emailsTrained += 1
 
+    print("Numbers of emails used for training: " + str(emailsTrained))
 
 
   ## function to calculate the probability that the given words are in 
@@ -109,7 +113,8 @@ class SpamFilter(object):
         score = score + math.log((self.d[w][label] + 1)/denominator)
     return score
 
-  def classify(self, filename, printOutput = False):
+  ## classifies an individual email based
+  def classify(self, filename, printOutput = False, testAccuracy = True):
 
     # open file and parse words into a set
     emailSet = set(open(filename).read().split())
@@ -125,27 +130,39 @@ class SpamFilter(object):
     if(printOutput):
       self.printClassification(filename, classifySpam)
 
-    # evaluate whether classification was correct
+    # if desired, evaluate whether classification was correct
     # for testing, emails have their label in their file name
-    actualSpam = False
-    if("spam" in filename):
-      actualSpam = True
+    if(testAccuracy):
+      actualSpam = False
+      if("spam" in filename):
+        actualSpam = True
 
-    correct = (classifySpam == actualSpam) 
-    self.accuracy[not correct][not actualSpam] += 1
+      correct = (classifySpam == actualSpam) 
+      self.accuracy[not correct][not actualSpam] += 1
 
+  ## attempts to classify all emails in a given directory
   def bulkClassify(self, bulkDirectory = "./evaluation"):
+
+    # keep track of number of emails classified
+    emailsClassified = 0
+
     for filename in glob.glob(os.path.join(bulkDirectory, '*txt')):
       self.classify(filename, False)
+      emailsClassified += 1
 
+    print("Number of emails classified: " + str(emailsClassified))
+
+    # print the accuracy of the resulting classifications
     self.printAccuracy()
 
+  ## helper method to print out whether a classification was correct or not
   def printClassification(self, filename, isSpam):
     if(isSpam):
       print(filename + " is spam.")
     else:
       print(filename + " is ham.")
 
+  ## print a report of the spam filter's accuracy
   def printAccuracy(self):
     spamPercentCorrect = self.accuracy[self.CORRECT][self.SPAM] / (
       self.accuracy[self.CORRECT][self.SPAM] + self.accuracy[self.INCORRECT][self.SPAM])
