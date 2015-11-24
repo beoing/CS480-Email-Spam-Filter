@@ -50,7 +50,7 @@ class SpamFilter(object):
       emailSet = set(file.read().split())
       file.close()
     except:
-      print(filename + " not found.")
+      # print(filename + " not found.")
       return
 
     # add each word to the correct label category
@@ -131,10 +131,10 @@ class SpamFilter(object):
       self.printClassification(filename, classifySpam)
 
     # if desired, evaluate whether classification was correct
-    # for testing, emails have their label in their file name
+    # for testing, spam emails have spam or spm in their file name
     if(testAccuracy):
       actualSpam = False
-      if("spam" in filename):
+      if("spam" in filename or "spm" in filename):
         actualSpam = True
 
       correct = (classifySpam == actualSpam) 
