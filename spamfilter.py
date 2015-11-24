@@ -1,178 +1,162 @@
-# spamfilter.py
-# A program to filter spam
+#### Naive Bayes Spam Filter
+#### Christopher To, Nathan Wikle, Valerie Free
+#### 
+####
 
 import string
+import math
 import os
 import glob
-import math
 
-global d
-global cat_total
+### naive bayesian spam filter that uses a self-developed knowledge base 
+### to classify emails as spam or ham
+class SpamFilter(object):
 
-global spamRight
-global spamWrong
-global hamRight
-global hamWrong
+  ## initialize and train the spam filter
+  ## spamD, hamD are parameters for directory of training emails
+  ## evalD lists the directory of emails to be trained.
+  def __init__(self):
+    # constant variables used for clarifying indexes
+    self.SPAM = 0
+    self.HAM = 1
+    self.CORRECT = 0
+    self.INCORRECT = 1
+    
+    # dictionary of tuples that maps words to their occurrences in 
+    # spam and ham emails
+    self.d = {}
 
-def train(filename, label):
-  global d
-  global cat_total
-  try:
-    file = open(filename)
+    # tuple that holds the number of spam and ham emails used for training
+    self.emailsTrained = [0, 0]
 
-    emailstring = file.read()
-    emaillist = emailstring.split()
-    emailset = set(emaillist)
-  except:
-    return
-  if label=="spam":
-    for word in emailset:
-      strippedword = word.strip(" " + string.punctuation).lower()
-      if strippedword in d:
-        d[strippedword][0]+=1
-      else:
-        d[strippedword]=[1, 0]
-  else:
-    for word in emailset:
-      strippedword = word.strip(" " + string.punctuation).lower()
-      if strippedword in d:
-        d[strippedword][1]+=1
-      else:
-        d[strippedword]=[0, 1]
+    # tuple that holds the number of individual occurrences of spam and ham 
+    # words in the training emails
+    # *technically derivable information, but derivation time can be massive
+    # based on knowledge base size and number of emails to classify
+    self.labelTotal = [0, 0]
 
-  file.close()
-
-def main():
-  ham_word_count = 0
-  spam_word_count = 0
-
-  global cat_total
-
-  cat_total = [0,0]
-  global d
-  d = {}
-
-  global spamRight
-  global spamWrong
-  global hamRight
-  global hamWrong
+    # tuple of tuple that holds the totals of spam and ham emails classified
+    # correctly or incorrectly. The first tuple is for correct classifications,
+    # and the second tuple is for incorrect classifications.
+    # Refer to the constant indexes for clarification.
+    self.accuracy = [ [0, 0], [0, 0] ]
+    
 
 
+  ## adds a labeled email to the spam filter's training knowledge base
+  def train(self, filename, label):
+    
+    # open file and parse words into a set
+    try:
+      file = open(filename)
+      emailSet = set(file.read().split())
+      file.close()
+    except:
+      print(filename + " not found.")
+      return
 
-  path = "./spam"
-  for filename in glob.glob(os.path.join(path, '*txt')):
-    train(filename, "spam")
-    cat_total[0]+=1
+    # add each word to the correct label category
+    for word in emailSet:
+      # remove all punctuation, capitalization, and spaces from word
+      strippedWord = word.strip(" " + string.punctuation).lower()
 
-  path = "./ham"
-  for filename in glob.glob(os.path.join(path, '*txt')):
-    train(filename, "ham")
-    cat_total[1]+=1
+      # ignore punctuation that was stripped to spaces
+      if strippedWord == "":
+        continue
 
-  spamRight = 0
-  spamWrong = 0
-  hamRight = 0
-  hamWrong = 0
+      # initialize the word tuple if not yet seen by the filter.
+      if strippedWord not in self.d:
+        self.d[strippedWord] = [0, 0]
 
-  
+      # increment the word occurrence count for the given label
+      self.d[strippedWord][label] += 1
 
-  path = "./evaluation"
-  for filename in glob.glob(os.path.join(path, '*txt')):
-    classify(filename, False)
-
-  print(spamRight, spamWrong, hamRight, hamWrong)
-
-
+      # increment the label training occurrence count
+      self.labelTotal[label] += 1
 
     
-### classification method
-### current assumption: all data that I need will be available,
-### from Valerie's code.
+  def bulkTrain(self, spamDirectory = "./spam", hamDirectory = "./ham"):
+    # training operations
+    # train filter to recognize spam words
+    for filename in glob.glob(os.path.join(spamDirectory, '*txt')):
+      self.train(filename, self.SPAM)
+      self.emailsTrained[self.SPAM] += 1
+    # train filter to recognize ham words
+
+    for filename in glob.glob(os.path.join(hamDirectory, '*txt')):
+      self.train(filename, self.HAM)
+      self.emailsTrained[self.HAM] += 1
 
 
-### calculates the total number of occurances of all the words in
-### the dictionary (only counting once per email)
-### input: cat: the category of interest (ham or spam)
-### output: the total number of times all of the words in the
-###          dictionary are found in each email.
-def monstersum(cat):
-  global d
-  count = 0
-  for word in d:
-    count += d[word][cat]
-  return count
 
-### function to calculate the probability that the
-### given words are in a specific class
-### input: words: a set of words
-###        cat: the category of interest
-### output: the probability that the given collection of words is
-###          is the indicated category
-def probability(words,cat):
-  # find the probability of the given category (i.e., number of
-  # cat emails divided by total number of emails)
-  global d
-  global cat_total
+  ## function to calculate the probability that the given words are in 
+  ## a specific class
+  def probability(self, words, label):
+    # find the probability of the given category (i.e., number of label emails 
+    # divided by total number of emails)
+    labelTotal = self.emailsTrained[label]
+    emailsTrainedTotal = self.emailsTrained[self.SPAM] + self.emailsTrained[self.HAM]
+    labelProbability = float(labelTotal/emailsTrainedTotal)
 
-  total = monstersum(cat)  
-  score = 0
-  # calculate the prior probability
-  cat_prob = float(cat_total[cat]/(cat_total[0]+cat_total[1]))
-  score = math.log(cat_prob) # take the log of the prior probability
-  for w in words:
+    # calculate and take the log of the prior probability
+    score = math.log(labelProbability) 
+    for w in words:
       # calculate the conditional probability for each word
-    if(not w in d):
-      score = score + math.log(1/(total + len(d)))
+      denominator = self.labelTotal[label] + len(self.d)
+      if(not w in self.d):
+        score = score + math.log(1/denominator)
+      else:
+        score = score + math.log((self.d[w][label] + 1)/denominator)
+    return score
+
+  def classify(self, filename, printOutput = False):
+
+    # open file and parse words into a set
+    emailSet = set(open(filename).read().split())
+
+    # calculate the probability that the email is spam or ham
+    probabilitySpam = self.probability(emailSet, self.SPAM)
+    probabilityHam = self.probability(emailSet, self.HAM)
+    classifySpam = False
+    if(probabilitySpam > probabilityHam):
+      classifySpam = True
+
+    # if desired, print the classification output
+    if(printOutput):
+      self.printClassification(filename, classifySpam)
+
+    # evaluate whether classification was correct
+    # for testing, emails have their label in their file name
+    actualSpam = False
+    if("spam" in filename):
+      actualSpam = True
+
+    correct = (classifySpam == actualSpam) 
+    self.accuracy[not correct][not actualSpam] += 1
+
+  def bulkClassify(self, bulkDirectory = "./evaluation"):
+    for filename in glob.glob(os.path.join(bulkDirectory, '*txt')):
+      self.classify(filename, False)
+
+    self.printAccuracy()
+
+  def printClassification(self, filename, isSpam):
+    if(isSpam):
+      print(filename + " is spam.")
     else:
-      score = score + math.log((d[w][cat] + 1)/(total + len(d)))
-  return score
+      print(filename + " is ham.")
 
+  def printAccuracy(self):
+    spamPercentCorrect = self.accuracy[self.CORRECT][self.SPAM] / (
+      self.accuracy[self.CORRECT][self.SPAM] + self.accuracy[self.INCORRECT][self.SPAM])
+    hamPercentCorrect = self.accuracy[self.CORRECT][self.HAM] / (
+      self.accuracy[self.CORRECT][self.HAM] + self.accuracy[self.INCORRECT][self.HAM])
 
-### function to classify a given test email
-### input: filename: the name of a txt file containing an email,
-###                   either ham or spam
-### output: a message stating whether the email has been classified
-###          as ham or spam
-def classify(filename, print_ans):
-  global num
-  global spamRight
-  global spamWrong
-  global hamRight
-  global hamWrong
+    print("Spam classified correctly: " + str(self.accuracy[self.CORRECT][self.SPAM]))
+    print("Spam classified incorrectly: " + str(self.accuracy[self.INCORRECT][self.SPAM]))
+    print("Ham classified correctly: " + str(self.accuracy[self.CORRECT][self.HAM]))
+    print("Ham classified incorrectly: " + str(self.accuracy[self.INCORRECT][self.HAM]))
 
-
-  spam = 0
-  ham = 1
-  
-  email = open(filename) #read in email
-  wordset = email.read() #string
-  wordset = set(wordset.split()) #set of words
-
-  # calculate the probability of spam (0), ham (1)
-  prob_spam = probability(wordset,spam)
-  # calculate the probability of ham
-  prob_ham = probability(wordset,ham)
-
-  if(prob_spam > prob_ham):
-    classified = 0
-  else:
-    classified = 1
-
-  if (print_ans):
-    if (not classifed):
-      print(filename + " This message is spam.")
-    else:
-      print(filename + " This message is ham.")
-
-  if ("spam" in filename and not classified):
-    spamRight = spamRight + 1
-  elif ("spam" in filename and classified):
-    spamWrong = spamWrong + 1
-  elif ("ham" in filename and not classified):
-    hamRight = hamRight + 1
-  else:
-    hamWrong = hamWrong + 1
-
-
-main()
-
+    print("Percentage of emails correctly classified:")
+    print("Spam: " + str(spamPercentCorrect))
+    print("Ham:  " + str(hamPercentCorrect))
