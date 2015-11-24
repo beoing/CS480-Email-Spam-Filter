@@ -1,4 +1,2 @@
-__pycache__
-./spamEnron/*
-./hamEnron/*
-./evaluationLing/*
+__pycache__/*
+__pycache__/spamfilter.cpython-35.pyc
