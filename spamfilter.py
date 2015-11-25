@@ -4,6 +4,7 @@
 ####
 
 import string
+import re
 import math
 import os
 import glob
@@ -55,7 +56,11 @@ class SpamFilter(object):
 
     # add each word to the correct label category
     for word in emailSet:
-      # remove all punctuation, capitalization, and spaces from word
+      
+      strippedWord = word
+      # check if there are alphanumeric characters in string
+      #if re.search('\w+', strippedWord):
+        # remove all punctuation, capitalization, and spaces from word
       strippedWord = word.strip(" " + string.punctuation).lower()
 
       # ignore punctuation that was stripped to spaces
@@ -177,3 +182,11 @@ class SpamFilter(object):
     print("Percentage of emails correctly classified:")
     print("Spam: " + str(spamPercentCorrect))
     print("Ham:  " + str(hamPercentCorrect))
+
+  ## print out dictionary for testing purposes
+  def printDictionary(self):
+    print(self.d)
+
+  ## reset accuracy values (for demonstration purposes)
+  def resetAccuracy(self):
+    self.accuracy = [ [0, 0], [0, 0] ]
