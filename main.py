@@ -1,3 +1,4 @@
+# main.py - demonstration of spamfilter.py
 # to run: create the object, bulk train it, then classify a directory
 # by default parameters, bulkTrain uses the ./spam and ./ham directories,
 # and bulkClassify uses the ./evaluation directory, but you can specify your own
