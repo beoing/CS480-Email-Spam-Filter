@@ -1,6 +1,6 @@
 #### Naive Bayes Spam Filter
 #### Christopher To, Nathan Wikle, Valerie Free
-#### 11/1/2015
+#### 11/30/2015
 #### Uses naive Bayesian statistics to develop a spam
 #### knowledge base and classify emails as spam or ham
 
