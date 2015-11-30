@@ -1,7 +1,8 @@
 #### Naive Bayes Spam Filter
 #### Christopher To, Nathan Wikle, Valerie Free
-#### 
-####
+#### 11/1/2015
+#### Uses naive Bayesian statistics to develop a spam
+#### knowledge base and classify emails as spam or ham
 
 import string
 import re
@@ -121,9 +122,14 @@ class SpamFilter(object):
   ## classifies an individual email based
   def classify(self, filename, printOutput = False, testAccuracy = True):
 
-    # open file and parse words into a set
-    emailSet = set(open(filename).read().split())
-
+    try:
+      # open file and parse words into a set
+      file = open(filename)
+      emailSet = set(file.read().split())
+      file.close()
+    except:
+      return
+      
     # calculate the probability that the email is spam or ham
     probabilitySpam = self.probability(emailSet, self.SPAM)
     probabilityHam = self.probability(emailSet, self.HAM)
@@ -190,3 +196,4 @@ class SpamFilter(object):
   ## reset accuracy values (for demonstration purposes)
   def resetAccuracy(self):
     self.accuracy = [ [0, 0], [0, 0] ]
+    print("Accuracy has been reset!")

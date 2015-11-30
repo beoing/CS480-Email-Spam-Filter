@@ -5,10 +5,19 @@
 from spamfilter import *
 
 sf = SpamFilter()
-sf.bulkTrain()
-#sf.bulkTrain("../spamEnron", "../hamEnron")
-#sf.bulkTrain("../spamLing2","../hamLing2")
-#sf.bulkTrain("../spamLing","../hamLing")
-sf.bulkClassify()
-#sf.bulkClassify("./evaluationLing")
+
+# commands done in presentation
+# assumes all appropriate directories are in one level above
+
+sf.bulkTrain("../spamEnron", "../hamEnron")
+sf.bulkClassify("../evaluationEnron")
+sf.resetAccuracy()
+sf.bulkClassify("../evaluationLing")
+sf.resetAccuracy()
+sf.bulkTrain("../spamLingPartial","../hamLingPartial")
+sf.bulkClassify("../evaluationLing")
+sf.resetAccuracy()
+sf.bulkTrain("../spamLingRest","../hamLingRest")
+sf.bulkClassify("../evaluationLing")
+sf.resetAccuracy()
 
